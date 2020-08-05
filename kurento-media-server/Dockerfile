@@ -58,6 +58,7 @@ ENV DEBIAN_FRONTEND="noninteractive" \
 RUN apt-get -q update && apt-get -q install --no-install-recommends --yes \
         gnupg \
         curl \
+        jq \
  && rm -rf /var/lib/apt/lists/*
 
 # Configure Apt:
