@@ -18,6 +18,7 @@ trap on_error ERR
 # Settings
 BASE_RTP_FILE="/etc/kurento/modules/kurento/BaseRtpEndpoint.conf.ini"
 WEBRTC_FILE="/etc/kurento/modules/kurento/WebRtcEndpoint.conf.ini"
+SDP_FILE="/etc/kurento/modules/kurento/SdpEndpoint.conf.json"
 
 # Check root permissions -- Overriding the Docker container run user (e.g. with
 # `docker run --user=1234`) is not supported, because this entrypoint script
@@ -44,6 +45,29 @@ function set_parameter() {
         echo "${PARAM}=${VALUE}" >>"$FILE"
     fi
 }
+
+# Aux function: if the path.key equals $PARAM comment path.key:value
+
+function comment_json_Parameter(){
+ # Assignments fail if any argument is missing (set -o nounset)
+    local FILE="$1"
+    local PATH="$2"
+    local KEY="$3"
+    local PARAM="$4"
+
+    local COMMENT="//"  # Kurento .conf.json files use "//" for comment lines
+    
+    if echo "$FILE" | jq -e '."$PATH"."$KEY" | test("$PARAM")' > /dev/null; then
+        ."$PATH"."//$KEY" = ."$PATH"."$KEY" | del(."$PATH"."$KEY")
+    fi
+
+    if grep --extended-regexp -q "$REGEX" "$FILE"; then
+        sed --regexp-extended -i "s/${REGEX}/${PARAM}=${VALUE}/" "$FILE"
+    else
+        echo "${PARAM}=${VALUE}" >>"$FILE"
+    fi
+}
+
 
 # BaseRtpEndpoint settings
 if [[ -n "${KMS_MIN_PORT:-}" ]]; then
@@ -91,6 +115,14 @@ cat /etc/hosts | sed '/::1/d' | tee /etc/hosts >/dev/null || true
 # https://doc-kurento.readthedocs.io/en/latest/features/logging.html#suggested-levels
 if [[ -z "${GST_DEBUG:-}" ]]; then
     export GST_DEBUG="3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
+fi
+
+if [[ ! $KMS_VP8 ]]; then
+    comment_json_Parameter "$SDP_FILE" '."videoCodecs"[0]' ".name" "VP8/90000"
+fi
+
+if [[ ! $KMS_H264 ]]; then
+     comment_json_Parameter "$SDP_FILE" '."videoCodecs"[1]' ".name" "H264/90000"
 fi
 
 # Run Kurento Media Server, changing to requested user (if any)
