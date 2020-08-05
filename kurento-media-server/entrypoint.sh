@@ -58,13 +58,7 @@ function comment_json_Parameter(){
     local COMMENT="//"  # Kurento .conf.json files use "//" for comment lines
     
     if echo "$FILE" | jq -e '."$PATH"."$KEY" | test("$PARAM")' > /dev/null; then
-        ."$PATH"."//$KEY" = ."$PATH"."$KEY" | del(."$PATH"."$KEY")
-    fi
-
-    if grep --extended-regexp -q "$REGEX" "$FILE"; then
-        sed --regexp-extended -i "s/${REGEX}/${PARAM}=${VALUE}/" "$FILE"
-    else
-        echo "${PARAM}=${VALUE}" >>"$FILE"
+        jq '."videoCodecs"[0]."//name" = ."videoCodecs"[0]."name" | del(."videoCodecs"[0]."name")' "$FILE"
     fi
 }
 
