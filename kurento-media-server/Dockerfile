@@ -115,7 +115,9 @@ ENV GST_DEBUG_NO_COLOR=1 \
     KMS_NETWORK_INTERFACES="" \
     KMS_STUN_IP="" \
     KMS_STUN_PORT="" \
-    KMS_TURN_URL=""
+    KMS_TURN_URL="" \
+    KMS_VP8=true \
+    KMS_H264=true
 
 # Expose default Kurento RPC control port
 EXPOSE 8888
